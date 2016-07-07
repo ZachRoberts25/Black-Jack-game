@@ -120,6 +120,7 @@ class Dealer
 end
 
 class World
+  @@wins_and_loses = []
   attr_accessor :dealer, :response, :total
   def initialize
     # puts "How many players want to play blackjack?"
@@ -201,26 +202,47 @@ def show_total_dealer
 end
   def determine_winners
     Player.show_players.each do |player|
-    return 0 if player.win?(@dealer) == "tie"
+    if player.win?(@dealer) == "tie"
+    @@wins_and_loses << 0
+    end
+
       if player.win?(@dealer)
-      return 1
+      @@wins_and_loses << 1
       else
-      return -1
+      @@wins_and_loses << -1
       end
     end
   end
+  def self.wins_and_loses
+    @@wins_and_loses
+  end
+
 end
 
 Player.new("zach", 5000)
 
 # Player.new("craig", 5000).bet(5000)
 # Player.new("austin", 5000).bet(5000)
-i = 0
+
 
 
 100000.times {game1 = World.new
 game1.deal
 game1.hit_or_stay
 game1.dealer_hit
-i += game1.determine_winners}
-p i
+game1.determine_winners}
+wins = 0
+ties = 0
+losses = 0
+World.wins_and_loses.each do |number|
+if number == 1
+  wins += 1
+elsif number == 0
+  ties += 1
+elsif number == -1
+  losses += 1
+end
+end
+puts "Percent of wins = #{wins.to_f/World.wins_and_loses.size}%"
+puts "Percent of ties = #{ties.to_f/World.wins_and_loses.size}%"
+puts "Percent of losses = #{losses.to_f/World.wins_and_loses.size}%"
