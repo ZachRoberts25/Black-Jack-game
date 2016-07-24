@@ -7,7 +7,6 @@ Currently it is set to how I would play.
 
 Fixes to come:
 
-Aces currently are only 11, need to implement 11 or 1
 No double down method
 No split method
 
