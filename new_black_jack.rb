@@ -4,8 +4,8 @@
 module PlayersDealers
 
   def get_hand(card1, card2)
-    @first_card = Card.new("A", "Spades")
-    @second_card = Card.new("A", "Hearts")
+    @first_card = card1
+    @second_card = card2
     @cards_in_hand = []
     @cards_in_hand << @first_card
     @cards_in_hand << @second_card
@@ -22,7 +22,7 @@ module PlayersDealers
           card.value = 1
           @total = 0
           self.cards_in_hand.each{|card| @total += card.value}
-            break
+          break
         end
       end
     end
@@ -76,21 +76,22 @@ class Deck_of_cards
 end
 class Player
   include PlayersDealers
-  attr_accessor :name, :amount_of_money, :cards_in_hand, :total
+  attr_accessor :name, :amount_of_money, :cards_in_hand, :total, :bet_amount
   @@players = []
   def initialize(name, amount_of_money)
     @name = name
     @amount_of_money = amount_of_money
     @@players << self
   end
-  #array for each player of all cards in their hand
-  def split
-
-  end
-  def double_down(dealer)
-    self.hit(dealer)
-    
-  end
+  # #array for each player of all cards in their hand
+  # def split
+  #
+  # end
+  # def double_down(dealer)
+  #   self.hit(dealer)
+  #   self.bet_amount += self.bet_amount
+  #
+  # end
 
   def self.show_players
     @@players
@@ -108,9 +109,17 @@ class Player
     @amount_of_money += (2 * @bet_amount)
   end
   def win?(dealer)
-    return false if self.total > 21
-    return true if dealer.total > 21 || self.total > dealer.total
-    return "tie" if dealer.total == self.total
+    if dealer.total == total
+      "tie"
+    elsif self.total > 21
+      false
+    elsif dealer.total > 21 || total > dealer.total
+      true
+    elsif dealer.total > total
+      false
+    else
+      "error"
+    end
   end
   def lose
     @amount_of_money
@@ -145,7 +154,8 @@ class Dealer
 end
 
 class World
-  @@wins_and_loses = []
+  @@statistics = Hash.new(0)
+
   attr_accessor :dealer, :response, :total
   def initialize
     # puts "How many players want to play blackjack?"
@@ -161,6 +171,9 @@ class World
     @dealer = Dealer.new(new_deck, "dealer")
 
   end
+  def self.stats
+    @@statistics
+  end
   def deal
     @dealer.deal_cards
     @dealer.total
@@ -168,11 +181,11 @@ class World
     # puts "#{@dealer.name} has #{@dealer.first_card.rank} of #{@dealer.first_card.suit}"
   end
   # def prompt_to_hit(player)
-  #   # puts "#{player.name} you total is #{player.total}, do you (H)it or (S)tay?"
+  #   puts "#{player.name} you total is #{player.total}, do you (H)it or (S)tay?"
   #   @response = gets.chomp.downcase
   # end
   # def update_player_on_hand(player)
-  #   # puts "#{player.name} your total is #{player.total} and your cards are #{player.cards_in_hand}"
+  #   puts "#{player.name} your total is #{player.total} and your cards are #{player.cards_in_hand}"
   # end
 
   def hit_or_stay
@@ -182,107 +195,92 @@ class World
     Player.show_players.each do |player|
       # This gets rid of anytime I have 18, 19, 20, 21, or 22 so we gucci
       player.calc_total
-          while player.total < 17
-            #always hit if I have under 10, no possible bust here
-            if player.total < 11
-              player.hit(@dealer)
-            end
-            #I have between 11 and 16, and the dealer is showing 7-11 then hit
-            if (player.total > 10 && player.total < 17) && (@dealer.first_card.value < 12 && @dealer.first_card.value > 6)
-              player.hit(@dealer)
-            end
-            #I have 11-15, when dealer is showing 2-6
-            if (player.total > 10 && player.total < 17) && (@dealer.first_card.value < 7 && @dealer.first_card.value > 1)
-              break
-            end
-          end
+      while player.total < 17
+        #always hit if I have under 10, no possible bust here
+        if player.total < 11
+          player.hit(@dealer)
         end
-      end
-
-
-
-      #This is code to play a normal game of black jack
-    #   Player.show_players.each do |player|
-    #     @response = "h"
-    #     @response == "h"
-    #     player.calc_total
-    #     @dealer.calc_total
-    #     while player.total < 21
-    #       prompt_to_hit(player)
-    #       if @response == "h"
-    #         player.hit(@dealer)
-    #         # player.calc_total
-    #         # if player.total > 21
-    #         #   player.total
-    #         # end
-    #
-    #         update_player_on_hand(player)
-    #       elsif @response == "s"
-    #         update_player_on_hand(player)
-    #         break
-    #       end
-    #     end
-    #   end
-    # end
-    def dealer_hit
-      # puts "Dealer has #{@dealer.total}"
-      @dealer.calc_total
-      until @dealer.total > 16 do
-        @dealer.hit
-      end
-      # puts "Dealer has #{@dealer.total}"
-    end
-    def show_total_dealer
-      # puts "#{@dealer.name} has a total of #{@dealer.total}"
-    end
-    def determine_winners
-      Player.show_players.each do |player|
-        if player.win?(@dealer) == "tie"
-          @@wins_and_loses << 0
+        #I have between 11 and 16, and the dealer is showing 7-11 then hit
+        if (player.total > 10 && player.total < 17) && (@dealer.first_card.value < 12 && @dealer.first_card.value > 6)
+          player.hit(@dealer)
         end
+        #I have 11-15, when dealer is showing 2-6
+        break  if (player.total > 10 && player.total < 17) && (@dealer.first_card.value < 7 && @dealer.first_card.value > 1)
 
-        if player.win?(@dealer)
-          @@wins_and_loses << 1
-        else
-          @@wins_and_loses << -1
-        end
       end
     end
-    def self.wins_and_loses
-      @@wins_and_loses
-    end
-
   end
 
-  zach = Player.new("zach", 5000)
 
-  # Player.new("craig", 5000).bet(5000)
-  # Player.new("austin", 5000).bet(5000)
+
+
+#This is code to play a normal game of black jack
+#   Player.show_players.each do |player|
+#     @response = "h"
+#     @response == "h"
+#     player.calc_total
+#     @dealer.calc_total
+#     while player.total < 21
+#       prompt_to_hit(player)
+#       if @response == "h"
+#         player.hit(@dealer)
+#         update_player_on_hand(player)
+#       elsif @response == "s"
+#         update_player_on_hand(player)
+#         break
+#       elsif @resonse == "d"
+#         player.double_down
+#         update_player_on_hand
+#         break
+#       end
+#     end
+#   end
+# end
+def dealer_hit
+  # puts "Dealer has #{@dealer.total}"
+  @dealer.calc_total
+  until @dealer.total > 16 do
+    @dealer.hit
+  end
+  # puts "Dealer has #{@dealer.total}"
+end
+def show_total_dealer
+  # puts "#{@dealer.name} has a total of #{@dealer.total}"
+end
+def determine_winners
+  Player.show_players.each do |player|
+    outcome = case player.win? @dealer
+    when "tie" then :ties
+    when "error" then :errors
+    when true then :wins
+    when false then :losses
+    end
+    @@statistics[outcome] += 1
+  end
+  @@statistics[:games] += 1
+end
+end
+
+zach = Player.new("zach", 5000)
+
+# Player.new("craig", 5000).bet(5000)
+# Player.new("austin", 5000).bet(5000)
+# game1 = World.new
+# game1.deal
+# zach.show_hand
+# game1.hit_or_stay
+# zach.show_hand
+# game1.dealer_hit
+
+
+100000.times do
   game1 = World.new
-  game1.deal
-  # zach.show_hand
-  # game1.hit_or_stay
-  # zach.show_hand
-  # game1.dealer_hit
-
-
-  100000.times {game1 = World.new
   game1.deal
   game1.hit_or_stay
   game1.dealer_hit
-  game1.determine_winners}
-  wins = 0
-  ties = 0
-  losses = 0
-  World.wins_and_loses.each do |number|
-  if number == 1
-    wins += 1
-  elsif number == 0
-    ties += 1
-  elsif number == -1
-    losses += 1
-  end
-  end
-  puts "Percent of wins = #{wins.to_f/World.wins_and_loses.size}%"
-  puts "Percent of ties = #{ties.to_f/World.wins_and_loses.size}%"
-  puts "Percent of losses = #{losses.to_f/World.wins_and_loses.size}%"
+  game1.determine_winners
+end
+puts "Percent of wins = #{World.stats[:wins].to_f/World.stats[:games] * 100}%"
+puts "Percent of ties = #{World.stats[:ties].to_f/World.stats[:games] * 100}%"
+puts "Percent of losses = #{World.stats[:losses].to_f/World.stats[:games] * 100}%"
+puts "Percent of errors = #{World.stats[:errors].to_f/World.stats[:games] * 100}%"
